@@ -1,4 +1,5 @@
-﻿using System.Windows.Input;
+﻿using System.Diagnostics.Metrics;
+using System.Windows.Input;
 
 namespace CommandTestApp
 {
@@ -28,11 +29,11 @@ namespace CommandTestApp
             /// comment.
             ///</summary>
 
-            // analysis approach
+            // assuming
 
             ///<summary>
-            ///we can achieve this using a Stack<T>, List<T> or LinkedList<T>
-            ///Stack<T>:
+            ///we can achieve this using a Stack<T,value>, List<T> or LinkedList<T>
+            ///Stack<T,value>:
             ///      follows LIFO
             ///      push and pop operations 
             ///      uses less memory
@@ -47,65 +48,67 @@ namespace CommandTestApp
             ///      slightly more memory usage 
             ///</summary>
 
-            int startvalue = 0;
-            if (args.Length == 0 || !int.TryParse(args[0], out int result) || result < 0)
+            // accepts both numbers and decimals
+            if (args.Length == 0 || !double.TryParse(args[0], out double result))
             {
                 Console.Write("Please enter the valid number: ");
-                result = int.Parse(Console.ReadLine());
-                startvalue = result;
+                result = double.Parse(Console.ReadLine()); // read entered input value 
+
+                //valid the input result that accepts more than 0
                 while (result < 0)
                 {
                     Console.WriteLine("Invalid Number, Please enter valid number");
-                    result = int.Parse(Console.ReadLine());
+                    result = double.Parse(Console.ReadLine()); //allow to accepts input again
                 }
             }
 
-
-            Stack<ICommand> history = new Stack<ICommand>();
+            //using stack to store command and command value
+            Stack<(ICommand, double PreviousResult)> history = new Stack<(ICommand, double)>();
 
             while (true)
             {
                 Console.Write("Enter command (increment, decrement, double, randadd, undo, exit): ");
-                string input = Console.ReadLine().ToLower();
+                string input = Console.ReadLine().ToLower(); // convert all the commands into lowercase
 
-                if (input == "exit") break;
+                if (input == "exit") break; // terimates program
 
-                ICommand command = null;
+                ICommand command = null; //create an interface instance  
 
+                //prefer switch case than nested if (Better memory usage, faster(direct jump table), cleaner)
                 switch (input)
                 {
-                    case "increment":
+                    case "increment":  // to perform addition
                         command = new Increment();
                         break;
-                    case "decrement":
+                    case "decrement":  // to perform subtraction
                         command = new Decrement();
                         break;
-                    case "double":
+                    case "double":  // to perform multiple by 2
                         command = new Double();
                         break;
-                    case "randadd":
+                    case "randadd":  // to generate random number btw 1 to 10
                         command = new RandAdd();
                         break;
-                    case "undo":
+                    case "undo":  // to perform revert above commands
                         if (history.Count > 0)
                         {
                             var lastCommand = history.Pop();
-                            result = history.Count == 0 ? startvalue: lastCommand.Undo(result);
-                            
+                            result = lastCommand.PreviousResult;
                             Console.WriteLine($"Result after undo: {result}");
                         }
-                        else
-                        {
+                        else  // calls if there is no commands left
                             Console.WriteLine("Nothing to undo.");
-                        }
                         continue;
-                    default:
+                    default:   // other than given commands
                         Console.WriteLine("Unknown command.");
                         continue;
                 }
 
+                //store both command and result into stack for better performance
+                history.Push((command, result));
+                // execute the result 
                 result = command.Execute(result);
-                history.Push(command);
+                //print result
                 Console.WriteLine($"Result: {result}");
             }
         }
@@ -115,30 +118,30 @@ namespace CommandTestApp
 
         public interface ICommand
         {
-            public int Execute(int param);
-            public int Undo(int param);
+            public double Execute(double param);
+            public double Undo(double param);
         }
 
         public class Increment : ICommand
         {
-            public int Execute(int i) => i = i + 1;
-            public int Undo(int i) => i = i = 1;
+            public double Execute(double i) => i = i + 1;
+            public double Undo(double i) => i = i = 1;
         }
 
         public class Decrement : ICommand
         {
-            public int Execute(int s) => s = s - 1;
-            public int Undo(int s) => s = s + 1;
+            public double Execute(double s) => s = s - 1;
+            public double Undo(double s) => s = s + 1;
         }
         public class Double : ICommand
         {
-            public int Execute(int d) => d = d * 2;
-            public int Undo(int d) => d = d / 2;
+            public double Execute(double d) => d = d * 2;
+            public double Undo(double d) => d = d / 2;
         }
 
         public class RandAdd : ICommand
         {
-            public int randvalue;
+            public double randvalue;
 
             public RandAdd()
             {
@@ -146,8 +149,8 @@ namespace CommandTestApp
                 randvalue = rd.Next(1, 10);
                 Console.WriteLine($"Rand value is:  {randvalue}");
             }
-            public int Execute(int r) => r = r + randvalue;
-            public int Undo(int r) => r = r - randvalue;
+            public double Execute(double r) => r = r + randvalue;
+            public double Undo(double r) => r = r - randvalue;
 
         }
     }
