@@ -48,21 +48,26 @@ namespace CommandTestApp
             ///      slightly more memory usage 
             ///</summary>
 
-            // accepts both numbers and decimals
+
+
+
+
+            // Accepts both integers and decimal numbers from command-line arguments
             if (args.Length == 0 || !double.TryParse(args[0], out double result))
             {
                 Console.Write("Please enter the valid number: ");
-                result = double.Parse(Console.ReadLine()); // read entered input value 
+                result = double.Parse(Console.ReadLine()); // Read and parse the entered input value as a double
 
-                //valid the input result that accepts more than 0
+                /// Validate that the input result is greater than or equal to 0
                 while (result < 0)
                 {
                     Console.WriteLine("Invalid Number, Please enter valid number");
-                    result = double.Parse(Console.ReadLine()); //allow to accepts input again
+                    result = double.Parse(Console.ReadLine()); // Allow re-entering input until a valid number is provided
                 }
             }
 
-            //using stack to store command and command value
+            // Use a stack to store commands  with  previous result using push and pop
+
             Stack<(ICommand, double PreviousResult)> history = new Stack<(ICommand, double)>();
 
             while (true)
@@ -72,7 +77,7 @@ namespace CommandTestApp
 
                 if (input == "exit") break; // terimates program
 
-                ICommand command = null; //create an interface instance  
+                ICommand command = null; //create an variable instance  
 
                 //prefer switch case than nested if (Better memory usage, faster(direct jump table), cleaner)
                 switch (input)
@@ -104,9 +109,9 @@ namespace CommandTestApp
                         continue;
                 }
 
-                //store both command and result into stack for better performance
+                // Store the command and its result in the stack for undo operations
                 history.Push((command, result));
-                // execute the result 
+                // Apply the selected command on the current result.
                 result = command.Execute(result);
                 //print result
                 Console.WriteLine($"Result: {result}");
