@@ -58,7 +58,7 @@ namespace CommandTestApp
                 Console.Write("Please enter the valid number: ");
                 result = double.Parse(Console.ReadLine()); // Read and parse the entered input value as a double
 
-                /// Validate that the input result is greater than or equal to 0
+                /// Validate that the input result is greater than 0
                 while (result < 0)
                 {
                     Console.WriteLine("Invalid Number, Please enter valid number");
@@ -66,9 +66,9 @@ namespace CommandTestApp
                 }
             }
 
-            // Use a stack to store commands  with  previous result using push and pop
+            // Use a stack to store commands  using push and pop
 
-            Stack<(ICommand, double PreviousResult)> history = new Stack<(ICommand, double)>();
+            Stack<ICommand> history = new Stack<ICommand>();
 
             while (true)
             {
@@ -97,8 +97,10 @@ namespace CommandTestApp
                     case "undo":  // to perform revert above commands
                         if (history.Count > 0)
                         {
+                            // Get the last command and remove
                             var lastCommand = history.Pop();
-                            result = lastCommand.PreviousResult;
+                            // Undo the command
+                            result = lastCommand.Undo(result);
                             Console.WriteLine($"Result after undo: {result}");
                         }
                         else  // calls if there is no commands left
@@ -109,10 +111,10 @@ namespace CommandTestApp
                         continue;
                 }
 
-                // Store the command and its result in the stack for undo operations
-                history.Push((command, result));
                 // Apply the selected command on the current result.
                 result = command.Execute(result);
+                // Store the command and its result in the stack for undo operations
+                history.Push(command);
                 //print result
                 Console.WriteLine($"Result: {result}");
             }
@@ -130,7 +132,7 @@ namespace CommandTestApp
         public class Increment : ICommand
         {
             public double Execute(double i) => i = i + 1;
-            public double Undo(double i) => i = i = 1;
+            public double Undo(double i) => i = i - 1;
         }
 
         public class Decrement : ICommand
